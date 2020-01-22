@@ -1,4 +1,4 @@
-local utils = require 'mp.utils'
+local utils = require "mp.utils"
 
 local cover_filenames = { "cover.png", "cover.jpg", "cover.jpeg" }
 
