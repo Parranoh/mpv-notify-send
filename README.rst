@@ -14,14 +14,6 @@ and embedded images aren’t currently supported).
 
 .. _mpv: https://mpv.io/
 
-Usage
-=====
-
-Either copy/link ``notify-send.lua`` into
-``$XDG_CONFIG_HOME/mpv/scripts``,
-or set ``script=/path/to/notify-send.lua`` in ``mpv.conf``
-or on the command line.
-
 Screenshot
 ==========
 
@@ -33,6 +25,45 @@ Screenshot
       as mpv plays the corresponding track.
     :width: 1125
     :height: 750
+
+Usage
+=====
+
+Either copy/link ``notify-send.lua``
+into ``$XDG_CONFIG_HOME/mpv/scripts``,
+or set ``script=/path/to/notify-send.lua`` in ``mpv.conf``
+or on the command line.
+
+If you use `Nix(OS)`_ then you can install ``default.nix`` directly
+or use the included ``overlay.nix`` in your ``configuration.nix``:
+
+.. code:: nix
+
+  { pkgs, ... }:
+
+  {
+    nixpkgs.overlays = [
+      # ...
+      (import /path/to/mpv-notify-send/overlay.nix)
+    ];
+
+    # ...
+
+    environment.systemPackages = with pkgs; [
+      # ...
+      mpv
+      mpv-notify-send
+    ];
+
+    environment.pathsToLink = ["/share/mpv"];
+  }
+
+You can then link ``<nix profile>/share/mpv/scripts/notify-send.lua``
+(e.g. ``/run/current-system/sw/share/...`` on NixOS,
+``$HOME/.nix-profile/share/...`` when using ``nix-env``)
+into ``$XDG_CONFIG_HOME/mpv/scripts``.
+
+.. _Nix(OS): https://nixos.org/
 
 Licence
 =======
