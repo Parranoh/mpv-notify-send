@@ -78,7 +78,7 @@ function notify_current_media()
         end
 
         title = tag("title") or title
-        origin = tag("artist") or ""
+        origin = tag("artist_credit") or tag("artist") or ""
 
         local album = tag("album")
         if album then
