@@ -9,8 +9,7 @@ with any libnotify-compatible notifications daemon.
 It reports title, album and year if available,
 and shows a cover image if present
 in the same directory as the media file
-(filename must be ``cover.{png,jpg,jpeg}``,
-and embedded images aren’t currently supported).
+(embedded images aren’t currently supported).
 
 .. _mpv: https://mpv.io/
 
