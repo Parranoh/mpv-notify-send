@@ -1,8 +1,11 @@
 local utils = require "mp.utils"
 
-local cover_filenames = { "cover.png", "cover.jpg", "cover.jpeg",
-                          "folder.jpg", "folder.png", "folder.jpeg",
-                          "AlbumArtwork.png", "AlbumArtwork.jpg", "AlbumArtwork.jpeg" }
+local cover_filenames = { "folder.jpg", "folder.png", "front.jpg", "front.png",
+                          "Folder.jpg", "Folder.png", "Front.jpg", "Front.png",
+                          "cover.png", "cover.jpg", "cover.jpeg",
+                          "Cover.png", "Cover.jpg", "Cover.jpeg",
+                          "Art.jpg", "art.jpg", "Art.png", "Art.jpg",
+                          "Album.jpg", "album.jpg", "Album.png", "album.png"}
 
 function notify(summary, body, options)
     local option_args = {}
@@ -10,7 +13,10 @@ function notify(summary, body, options)
         table.insert(option_args, string.format("--%s=%s", key, value))
     end
     return mp.command_native({
-        "run", "notify-send", unpack(option_args),
+        "run", "dunstify", 
+        "--appname=mpv_music", 
+        "--replace=111",
+        unpack(option_args),
         summary, body,
     })
 end
