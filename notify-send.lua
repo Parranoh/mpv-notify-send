@@ -5,6 +5,7 @@ local cover_filenames = { "cover.png", "cover.jpg", "cover.jpeg",
                           "AlbumArtwork.png", "AlbumArtwork.jpg", "AlbumArtwork.jpeg" }
 
 function notify(summary, body, options)
+    if summary == "" and body == "" then return end
     local option_args = {}
     for key, value in pairs(options or {}) do
         table.insert(option_args, string.format("--%s=%s", key, value))
