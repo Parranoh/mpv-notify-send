@@ -70,7 +70,7 @@ function notify_current_media()
     -- hooking off existing desktop thumbnails would be good too
     local thumbnail = find_cover(dir)
 
-    local title = file
+    local title = mp.get_property_native("media-title") or file
     local origin = dir
 
     local metadata = mp.get_property_native("metadata")
