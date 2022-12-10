@@ -10,7 +10,7 @@ function notify(summary, body, options)
         table.insert(option_args, string.format("--%s=%s", key, value))
     end
     return mp.command_native({
-        "run", "notify-send", unpack(option_args),
+        "run", "notify-send", "-r","10",unpack(option_args),
         summary, body,
     })
 end
@@ -48,6 +48,18 @@ function find_cover(dir)
     -- make dir an absolute path
     if dir[1] ~= "/" then
         dir = utils.join_path(utils.getcwd(), dir)
+    end
+    local path = mp.get_property_native("path")
+    local cmd = string.format("ffprobe -i '%s' -show_streams -select_streams v -v quiet", path)
+    local handle = io.popen(cmd)
+    local result = handle:read("*a")
+    handle:close()
+    
+    if result ~= "" then
+        local art_file = "/tmp/cover.png"
+        local cmd = string.format("ffmpeg -i '%s' -v -8 -y -an -vcodec png '%s'", path, art_file)
+        os.execute(cmd)
+        return art_file
     end
 
     for _, file in ipairs(cover_filenames) do
