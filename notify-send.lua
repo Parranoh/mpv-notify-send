@@ -52,6 +52,10 @@ function find_cover(dir)
     return nil
 end
 
+function first_upper(str)
+    return (str:gsub("^%l", string.upper))
+end
+
 function notify_current_media()
     local path = mp.get_property_native("path")
 
@@ -68,7 +72,7 @@ function notify_current_media()
     local metadata = mp.get_property_native("metadata")
     if metadata then
         function tag(name)
-            return metadata[string.upper(name)] or metadata[name]
+            return metadata[string.upper(name)] or metadata[first_upper(name)] or metadata[name]
         end
 
         title = tag("title") or title
