@@ -1,29 +1,27 @@
 local utils = require "mp.utils"
 
-local cover_filenames = { "cover.png", "cover.jpg", "cover.jpeg",
-                          "folder.jpg", "folder.png", "folder.jpeg",
-                          "AlbumArtwork.png", "AlbumArtwork.jpg", "AlbumArtwork.jpeg" }
+local cover_filenames = {
+    "cover.png", "cover.jpg", "cover.jpeg",
+    "Cover.png", "Cover.jpg", "Cover.jpeg",
+    "folder.jpg", "folder.png", "folder.jpeg",
+    "Folder.jpg", "Folder.png", "Folder.jpeg",
+    "AlbumArtwork.png", "AlbumArtwork.jpg", "AlbumArtwork.jpeg",
+}
 
 function notify(summary, body, options)
     local option_args = {}
     for key, value in pairs(options or {}) do
         table.insert(option_args, string.format("--%s=%s", key, value))
     end
-    return mp.command_native({
-        "run", "notify-send",
-        summary, body,
-        unpack(option_args)
+    local r = mp.command_native({
+        name = "subprocess",
+        playback_only = false,
+        args = { "notify-send", summary, body, unpack(option_args) },
     })
 end
 
-function escape_pango_markup(str)
-    return string.gsub(str, "([\"'<>&])", function (char)
-        return string.format("&#%d;", string.byte(char))
-    end)
-end
-
 function notify_media(title, origin, thumbnail)
-    return notify(escape_pango_markup(title), origin, {
+    notify(title, origin, {
         urgency = "low",
         ["app-name"] = "mpv",
         hint = "string:desktop-entry:mpv",
@@ -52,6 +50,26 @@ function find_cover(dir)
     return nil
 end
 
+function extract_cover(path)
+    local tmp = os.tmpname()
+    local r = mp.command_native({
+        name = "subprocess",
+        playback_only = false,
+        capture_stderr = true,
+        args = { "metaflac", "--export-picture-to=" .. tmp, path },
+    })
+    if r.status == 0 then
+        return tmp, function () os.remove(tmp) end
+    end
+    return nil
+end
+
+function get_cover(path, dir)
+    local cover = find_cover(dir)
+    if cover then return cover end
+    return extract_cover(path)
+end
+
 function first_upper(str)
     return (string.gsub(string.gsub(str, "^%l", string.upper), "_%l", string.upper))
 end
@@ -66,7 +84,7 @@ function notify_current_media()
     -- TODO: handle embedded covers and videos?
     -- potential options: mpv's take_screenshot, ffprobe/ffmpeg, ...
     -- hooking off existing desktop thumbnails would be good too
-    local thumbnail = find_cover(dir)
+    local thumbnail, cleanup = get_cover(path, dir)
 
     local title = file
     local origin = dir
@@ -91,7 +109,8 @@ function notify_current_media()
         end
     end
 
-    return notify_media(title, origin, thumbnail)
+    notify_media(title, origin, thumbnail)
+    if cleanup then cleanup() end
 end
 
 mp.register_event("file-loaded", notify_current_media)
