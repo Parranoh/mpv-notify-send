@@ -10,8 +10,9 @@ function notify(summary, body, options)
         table.insert(option_args, string.format("--%s=%s", key, value))
     end
     return mp.command_native({
-        "run", "notify-send", unpack(option_args),
+        "run", "notify-send",
         summary, body,
+        unpack(option_args)
     })
 end
 
@@ -23,18 +24,9 @@ end
 
 function notify_media(title, origin, thumbnail)
     return notify(escape_pango_markup(title), origin, {
-        -- For some inscrutable reason, GNOME 3.24.2
-        -- nondeterministically fails to pick up the notification icon
-        -- if either of these two parameters are present.
-        --
-        -- urgency = "low",
-        -- ["app-name"] = "mpv",
-
-        -- ...and this one makes notifications nondeterministically
-        -- fail to appear altogether.
-        --
-        -- hint = "string:desktop-entry:mpv",
-
+        urgency = "low",
+        ["app-name"] = "mpv",
+        hint = "string:desktop-entry:mpv",
         icon = thumbnail or "mpv",
     })
 end
