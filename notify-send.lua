@@ -57,6 +57,8 @@ function first_upper(str)
 end
 
 function notify_current_media()
+    if mp.get_property_native("focused") then return end
+
     local path = mp.get_property_native("path")
 
     local dir, file = utils.split_path(path)
