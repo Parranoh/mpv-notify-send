@@ -83,7 +83,7 @@ function notify_current_media()
             origin = string.format("%s — %s", origin, album)
         end
 
-        local year = tag("original_year") or tag("year")
+        local year = tag("original_year") or tag("year") or tag("date"):sub(1,4)
         if year then
             origin = string.format("%s (%s)", origin, year)
         end
