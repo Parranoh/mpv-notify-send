@@ -95,7 +95,8 @@ function notify_current_media()
             return metadata[string.upper(name)] or metadata[first_upper(name)] or metadata[name]
         end
 
-        title = tag("title") or title
+        title = tag("title")
+        title = title and #title > 0 and title or file
         origin = tag("artist_credit") or tag("artist") or ""
 
         local album = tag("album")
