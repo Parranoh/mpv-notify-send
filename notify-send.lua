@@ -53,7 +53,7 @@ function find_cover(dir)
 end
 
 function first_upper(str)
-    return (str:gsub("^%l", string.upper))
+    return (string.gsub(string.gsub(str, "^%l", string.upper), "_%l", string.upper))
 end
 
 function notify_current_media()
