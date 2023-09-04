@@ -5,14 +5,17 @@ local cover_filenames = { "cover.png", "cover.jpg", "cover.jpeg",
                           "AlbumArtwork.png", "AlbumArtwork.jpg", "AlbumArtwork.jpeg" }
 
 function notify(summary, body, options)
-    local option_args = {}
+    local command = { "notify-send" }
     for key, value in pairs(options or {}) do
-        table.insert(option_args, string.format("--%s=%s", key, value))
+        table.insert(command, string.format("--%s=%s", key, value))
     end
-    return mp.command_native({
-        "run", "notify-send",
-        summary, body,
-        unpack(option_args)
+    table.insert(command, "--")
+    table.insert(command, summary)
+    table.insert(command, body)
+    mp.command_native({
+        name = "subprocess",
+        playback_only = false,
+        args = command,
     })
 end
 
