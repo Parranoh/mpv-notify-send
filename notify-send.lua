@@ -9,14 +9,17 @@ local cover_filenames = {
 }
 
 function notify(summary, body, options)
-    local option_args = {}
+    local command = { "notify-send" }
     for key, value in pairs(options or {}) do
-        table.insert(option_args, string.format("--%s=%s", key, value))
+        table.insert(command, string.format("--%s=%s", key, value))
     end
-    local r = mp.command_native({
+    table.insert(command, "--")
+    table.insert(command, summary)
+    table.insert(command, body)
+    mp.command_native({
         name = "subprocess",
         playback_only = false,
-        args = { "notify-send", summary, body, unpack(option_args) },
+        args = command,
     })
 end
 
