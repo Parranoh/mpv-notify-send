@@ -89,7 +89,7 @@ function notify_current_media()
     -- hooking off existing desktop thumbnails would be good too
     local thumbnail, cleanup = get_cover(path, dir)
 
-    local title = file
+    local title = mp.get_property_native("media-title")
     local origin = dir
 
     local metadata = mp.get_property_native("metadata")
@@ -98,8 +98,8 @@ function notify_current_media()
             return metadata[string.upper(name)] or metadata[first_upper(name)] or metadata[name]
         end
 
-        title = tag("title")
-        title = title and #title > 0 and title or file
+        local tag_title = tag("title")
+        title = tag_title and #tag_title > 0 and tag_title or title
         origin = tag("artist_credit") or tag("artist") or ""
 
         local album = tag("album")
