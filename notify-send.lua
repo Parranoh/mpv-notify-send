@@ -24,7 +24,10 @@ function notify(summary, body, options)
 end
 
 function notify_media(title, origin, thumbnail)
-    notify(title, origin, {
+    -- escape Pango markup only in body
+    -- cf. https://specifications.freedesktop.org/notification-spec/latest/ar01s04.html
+    local body = origin:gsub("<", "&lt;")
+    notify(title, body, {
         urgency = "low",
         ["app-name"] = "mpv",
         hint = "string:desktop-entry:mpv",
