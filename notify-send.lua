@@ -1,40 +1,36 @@
 local utils = require "mp.utils"
 
-local cover_filenames = { "cover.png", "cover.jpg", "cover.jpeg",
-                          "folder.jpg", "folder.png", "folder.jpeg",
-                          "AlbumArtwork.png", "AlbumArtwork.jpg", "AlbumArtwork.jpeg" }
+local cover_filenames = {
+    "cover.png", "cover.jpg", "cover.jpeg",
+    "Cover.png", "Cover.jpg", "Cover.jpeg",
+    "folder.jpg", "folder.png", "folder.jpeg",
+    "Folder.jpg", "Folder.png", "Folder.jpeg",
+    "AlbumArtwork.png", "AlbumArtwork.jpg", "AlbumArtwork.jpeg",
+}
 
 function notify(summary, body, options)
-    local option_args = {}
+    local command = { "notify-send" }
     for key, value in pairs(options or {}) do
-        table.insert(option_args, string.format("--%s=%s", key, value))
+        table.insert(command, string.format("--%s=%s", key, value))
     end
-    return mp.command_native({
-        "run", "notify-send", unpack(option_args),
-        summary, body,
+    table.insert(command, "--")
+    table.insert(command, summary)
+    table.insert(command, body)
+    mp.command_native({
+        name = "subprocess",
+        playback_only = false,
+        args = command,
     })
 end
 
-function escape_pango_markup(str)
-    return string.gsub(str, "([\"'<>&])", function (char)
-        return string.format("&#%d;", string.byte(char))
-    end)
-end
-
 function notify_media(title, origin, thumbnail)
-    return notify(escape_pango_markup(title), origin, {
-        -- For some inscrutable reason, GNOME 3.24.2
-        -- nondeterministically fails to pick up the notification icon
-        -- if either of these two parameters are present.
-        --
-        -- urgency = "low",
-        -- ["app-name"] = "mpv",
-
-        -- ...and this one makes notifications nondeterministically
-        -- fail to appear altogether.
-        --
-        -- hint = "string:desktop-entry:mpv",
-
+    -- escape Pango markup only in body
+    -- cf. https://specifications.freedesktop.org/notification-spec/latest/ar01s04.html
+    local body = origin:gsub("&", "&amp;"):gsub("<", "&lt;")
+    notify(title, body, {
+        urgency = "low",
+        ["app-name"] = "mpv",
+        hint = "string:desktop-entry:mpv",
         icon = thumbnail or "mpv",
     })
 end
@@ -60,7 +56,33 @@ function find_cover(dir)
     return nil
 end
 
+function extract_cover(path)
+    local tmp = os.tmpname()
+    local r = mp.command_native({
+        name = "subprocess",
+        playback_only = false,
+        capture_stderr = true,
+        args = { "metaflac", "--export-picture-to=" .. tmp, path },
+    })
+    if r.status == 0 then
+        return tmp, function () os.remove(tmp) end
+    end
+    return nil
+end
+
+function get_cover(path, dir)
+    local cover = find_cover(dir)
+    if cover then return cover end
+    return extract_cover(path)
+end
+
+function first_upper(str)
+    return (string.gsub(string.gsub(str, "^%l", string.upper), "_%l", string.upper))
+end
+
 function notify_current_media()
+    if mp.get_property_native("focused") then return end
+
     local path = mp.get_property_native("path")
 
     local dir, file = utils.split_path(path)
@@ -68,18 +90,19 @@ function notify_current_media()
     -- TODO: handle embedded covers and videos?
     -- potential options: mpv's take_screenshot, ffprobe/ffmpeg, ...
     -- hooking off existing desktop thumbnails would be good too
-    local thumbnail = find_cover(dir)
+    local thumbnail, cleanup = get_cover(path, dir)
 
-    local title = file
+    local title = mp.get_property_native("media-title")
     local origin = dir
 
     local metadata = mp.get_property_native("metadata")
     if metadata then
         function tag(name)
-            return metadata[string.upper(name)] or metadata[name]
+            return metadata[string.upper(name)] or metadata[first_upper(name)] or metadata[name]
         end
 
-        title = tag("title") or title
+        local tag_title = tag("title")
+        title = tag_title and #tag_title > 0 and tag_title or title
         origin = tag("artist_credit") or tag("artist") or ""
 
         local album = tag("album")
@@ -87,13 +110,15 @@ function notify_current_media()
             origin = string.format("%s — %s", origin, album)
         end
 
-        local year = tag("original_year") or tag("year")
+        local date = tag("date")
+        local year = tag("original_year") or tag("year") or (date and date:sub(1, 4))
         if year then
             origin = string.format("%s (%s)", origin, year)
         end
     end
 
-    return notify_media(title, origin, thumbnail)
+    notify_media(title, origin, thumbnail)
+    if cleanup then cleanup() end
 end
 
 mp.register_event("file-loaded", notify_current_media)
