@@ -20,7 +20,7 @@ stdenv.mkDerivation {
   '';
 
   meta = with stdenv.lib; {
-    homepage = "https://github.com/emilazy/mpv-notify-send";
+    homepage = "https://github.com/Parranoh/mpv-notify-send";
     description = "A Lua script for mpv to send notifications with notify-send(1)";
     license = licenses.wtfpl;
     platforms = platforms.all;
