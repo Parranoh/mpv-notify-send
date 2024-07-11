@@ -93,3 +93,4 @@ function notify_current_media()
 end
 
 mp.register_event("file-loaded", notify_current_media)
+mp.add_key_binding("N", notify_current_media)
