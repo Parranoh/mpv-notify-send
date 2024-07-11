@@ -16,14 +16,11 @@ function notify(summary, body, options)
     })
 end
 
-function escape_pango_markup(str)
-    return string.gsub(str, "([\"'<>&])", function (char)
-        return string.format("&#%d;", string.byte(char))
-    end)
-end
-
 function notify_media(title, origin, thumbnail)
-    return notify(escape_pango_markup(title), origin, {
+    -- escape Pango markup only in body
+    -- cf. https://specifications.freedesktop.org/notification-spec/latest/ar01s04.html
+    local body = origin:gsub("&", "&amp;"):gsub("<", "&lt;")
+    notify(title, body, {
         urgency = "low",
         ["app-name"] = "mpv",
         hint = "string:desktop-entry:mpv",
