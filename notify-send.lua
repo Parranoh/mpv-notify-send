@@ -50,18 +50,20 @@ function find_cover(dir)
         dir = utils.join_path(utils.getcwd(), dir)
     end
     local path = mp.get_property_native("path")
-    local cmd = string.format("ffprobe -i '%s' -show_streams -select_streams v -v quiet", path)
+    if string.match(path, "^http")=="http" then
+        return nil
+    end
+    local cmd = string.format("ffprobe -i \"%s\" -show_streams -select_streams v -v quiet", path)
     local handle = io.popen(cmd)
     local result = handle:read("*a")
     handle:close()
     
     if result ~= "" then
         local art_file = "/tmp/cover.png"
-        local cmd = string.format("ffmpeg -i '%s' -v -8 -y -an -vcodec png '%s'", path, art_file)
+        local cmd = string.format("ffmpeg -i \"%s\" -v -8 -y -an -vcodec png '%s'", path, art_file)
         os.execute(cmd)
         return art_file
     end
-
     for _, file in ipairs(cover_filenames) do
         local path = utils.join_path(dir, file)
         if file_exists(path) then
@@ -69,7 +71,38 @@ function find_cover(dir)
         end
     end
 
+
     return nil
+end
+
+function get_screenshot_at_position(position)
+    local path = mp.get_property_native("path")
+    if string.match(path, "^http")=="http" then
+        return nil
+    end
+    local screenshot_file = "/tmp/cover.png"
+    os.execute("test -e /tmp/cover.png && rm /tmp/cover.png")
+    local cmd = string.format("ffmpeg -y -v -8 -ss %f -i \"%s\" -vframes 1 %s", position, path, screenshot_file)
+    --mp.msg.warn(cmd)
+    local ret = os.execute(cmd)
+    --mp.msg.warn(ret)
+    if ret ~=0 then
+        return nil
+    else
+        return screenshot_file
+    end
+end
+
+function is_mp3_file()
+    local path = mp.get_property_native("path")
+    if string.match(path, "^http")=="http" then
+        return false
+    end
+    local cmd = string.format("ffprobe -v quiet -show_entries format=format_name -of default=noprint_wrappers=1:nokey=1 \"%s\"",path)
+    local handle = io.popen(cmd)
+    local result = handle:read()
+    handle:close()
+    return result == "mp3"
 end
 
 function notify_current_media()
@@ -80,7 +113,17 @@ function notify_current_media()
     -- TODO: handle embedded covers and videos?
     -- potential options: mpv's take_screenshot, ffprobe/ffmpeg, ...
     -- hooking off existing desktop thumbnails would be good too
-    local thumbnail = find_cover(dir)
+    local stream_filename = mp.get_property_native("stream-open-filename")
+    if stream_filename and not is_mp3_file() then
+        local duration = mp.get_property_number("duration")
+        thumbnail = get_screenshot_at_position(duration / 5)
+        if not thumbnail then
+            thumbnail = find_cover(dir)
+        end
+    else
+        thumbnail = find_cover(dir)
+    end
+
 
     local title = file
     local origin = dir
@@ -94,17 +137,19 @@ function notify_current_media()
         title = tag("title") or title
         origin = tag("artist_credit") or tag("artist") or ""
 
-        local album = tag("album")
-        if album then
-            origin = string.format("%s — %s", origin, album)
-        end
+        --local album = tag("album")
+        --if album then
+        --    origin = string.format("%s — %s", origin, album)
+        --end
 
         local year = tag("original_year") or tag("year")
         if year then
             origin = string.format("%s (%s)", origin, year)
         end
     end
-
+    local counts=mp.get_property_number("playlist-count")-1
+    local pos=mp.get_property_number("playlist-pos")
+    origin=string.format("%s\n%d/%d",origin,pos,counts)
     return notify_media(title, origin, thumbnail)
 end
 
